@@ -1,5 +1,6 @@
 class Cromosoma:
-    def __init__(self, i):
+    def __init__(self,id, i):
+        self.id=id
         self.i = i
         self.x = 0
         self.fx = 0
