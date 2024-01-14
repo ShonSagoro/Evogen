@@ -42,7 +42,6 @@ class ChromosomaGui(customtkinter.CTk):
         min_limit_x = 3
         max_limit_x = 7
 
-        cross_prob = 0.90
         ind_mut_prob = 0.90
         gen_mut_prob = 0.90
 
@@ -50,7 +49,7 @@ class ChromosomaGui(customtkinter.CTk):
         generations = 4
 
         is_min_solution = False
-        self.parameter = Parameter(min_limit_x, max_limit_x, population_size, population_size_max, cross_prob,
+        self.parameter = Parameter(min_limit_x, max_limit_x, population_size, population_size_max,
                                    ind_mut_prob, gen_mut_prob, generations, resolution_ideal, cant_ind_cross,
                                    is_min_solution)
         self.chromosomaUtil = ChromosomaUtil(self.parameter, self.expression)
@@ -165,13 +164,6 @@ class ChromosomaGui(customtkinter.CTk):
                                                               font=self.title_font)
         self.label_title_probability.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
 
-        self.label_cross_prob = customtkinter.CTkLabel(self.probability_frame, text="Cross chromosome probability: ")
-        self.label_cross_prob.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-        self.entry_cross_prob = customtkinter.CTkEntry(self.probability_frame,
-                                                       textvariable=customtkinter.StringVar(
-                                                           value=self.parameter.crossProb))
-        self.entry_cross_prob.grid(row=1, column=1, padx=10, pady=10, sticky="w")
-
         self.label_ind_mut_prob = customtkinter.CTkLabel(self.probability_frame,
                                                          text="Individual chromosome probability to Mut: ")
         self.label_ind_mut_prob.grid(row=2, column=0, padx=10, pady=10, sticky="w")
@@ -203,21 +195,22 @@ class ChromosomaGui(customtkinter.CTk):
 
         # Generation
         self.generation_frame = customtkinter.CTkFrame(self.initial_frame)
-        self.generation_frame.grid(row=1, column=1, padx=10, pady=10, sticky="we")
+        self.generation_frame.grid(row=1, column=1, padx=10, pady=10, sticky="ew")
         self.label_title_generation = customtkinter.CTkLabel(self.generation_frame, text="Generation",
                                                              font=self.title_font)
-        self.label_title_generation.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
+        self.label_title_generation.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsw")
 
         self.label_generation = customtkinter.CTkLabel(self.generation_frame, text="Generations: ")
-        self.label_generation.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        self.label_generation.grid(row=1, column=0, padx=10, pady=10, sticky="nw")
         self.entry_generation = customtkinter.CTkEntry(self.generation_frame,
                                                        textvariable=customtkinter.StringVar(
                                                            value=self.parameter.generations))
-        self.entry_generation.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+        self.entry_generation.grid(row=1, column=1, padx=10, pady=10, sticky="nw")
+        self.generation_frame.grid_columnconfigure(0, weight=1)
 
         # type solution
         self.type_solution_frame = customtkinter.CTkFrame(self.initial_frame)
-        self.type_solution_frame.grid(row=2, column=1, padx=10, pady=10, sticky="we")
+        self.type_solution_frame.grid(row=2, column=1, padx=10, pady=10, sticky="news")
         self.label_title_type_solution = customtkinter.CTkLabel(self.type_solution_frame, text="Type solution",
                                                                 font=self.title_font)
         self.label_title_type_solution.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
@@ -231,23 +224,24 @@ class ChromosomaGui(customtkinter.CTk):
         self.max_solution.grid(row=1, column=1, padx=10, pady=10, sticky="wes")
 
         self.bar_frame = customtkinter.CTkFrame(self.initial_frame)
-        self.bar_frame.grid(row=3, column=1, padx=10, pady=10, sticky="we")
+        self.bar_frame.grid(row=3, column=1, padx=10, pady=10, sticky="news")
         self.label_title_progress = customtkinter.CTkLabel(self.bar_frame, text="Progress",
-                                                             font=self.title_font)
+                                                           font=self.title_font)
         self.label_title_progress.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
         self.progressbar = customtkinter.CTkProgressBar(self.bar_frame, orientation="horizontal", mode="determinate")
         self.progressbar.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="w")
         self.progressbar.set(0)
-        self.label_progressbar = customtkinter.CTkLabel(self.bar_frame, text="Info: Dale al boton 'start' para iniciar.")
+        self.label_progressbar = customtkinter.CTkLabel(self.bar_frame,
+                                                        text="Info: Dale al boton 'start' para iniciar.")
         self.label_progressbar.grid(row=2, column=0, padx=10, pady=(10, 0), sticky="w")
 
         self.credits_frame = customtkinter.CTkFrame(self.initial_frame, fg_color="transparent")
-        self.credits_frame.grid(row=4, column=1, padx=10, pady=10, sticky="we")
+        self.credits_frame.grid(row=4, column=1, padx=10, pady=10, sticky="news")
         self.label_credits = customtkinter.CTkLabel(self.credits_frame, text="By: Jonathan Salvador Gomez Roque")
         self.label_credits.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
         # Button
         self.button = customtkinter.CTkButton(self.initial_frame, text="Start", command=self.button_callback)
-        self.button.grid(row=4, column=0, padx=10, pady=10, sticky="wes")
+        self.button.grid(row=4, column=0, padx=10, pady=10, sticky="news")
         self.show_page(self.initial_frame)
 
         self.chars_event = threading.Event()
@@ -273,14 +267,13 @@ class ChromosomaGui(customtkinter.CTk):
         min_limit_x = int(self.entry_min_x.get())
         max_limit_x = int(self.entry_max_x.get())
 
-        cross_prob = float(self.entry_cross_prob.get())
         ind_mut_prob = float(self.entry_ind_mut_prob.get())
         gen_mut_prob = float(self.entry_gen_mut_prob.get())
 
         resolution_ideal = float(self.entry_resolution.get())
         generations = int(self.entry_generation.get())
 
-        self.parameter = Parameter(min_limit_x, max_limit_x, population_size, population_size_max, cross_prob,
+        self.parameter = Parameter(min_limit_x, max_limit_x, population_size, population_size_max,
                                    ind_mut_prob, gen_mut_prob, generations, resolution_ideal, cant_ind_cross,
                                    is_min_solution)
         self.button.configure(state="disabled")
@@ -310,6 +303,7 @@ class ChromosomaGui(customtkinter.CTk):
     def try_again(self):
         self.progressbar.set(0)
         self.label_progressbar.configure(text="Info: Vuelve a presionar start para realizar otra vez el calculo")
+
     def put_the_chars(self, parent):
 
         scrollbar_frame = FrameScrollBar(parent, width=700, height=600, corner_radius=0, fg_color="transparent")

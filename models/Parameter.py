@@ -2,13 +2,12 @@ import math
 
 
 class Parameter:
-    def __init__(self, min_limit, max_limit, pob, pob_max, cross_prob, ind_mut_prob, gen_mut_prob, generations,
+    def __init__(self, min_limit, max_limit, pob, pob_max, ind_mut_prob, gen_mut_prob, generations,
                  resolution_ideal, cant_ind_cross, is_min_solution):
         self.min_limit = min_limit
         self.max_limit = max_limit
         self.pob = pob
         self.pob_max = pob_max
-        self.crossProb = cross_prob
         self.indMutProb = ind_mut_prob
         self.genMutProb = gen_mut_prob
         self.range = self.define_range()
