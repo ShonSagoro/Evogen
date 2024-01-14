@@ -8,6 +8,7 @@ class Generation:
         self.is_min_fn = is_min_fn
         self.define_fitness()
         self.define_prom()
+        print(self.is_min_fn)
     def define_prom(self):
         result = 0
         for cromosoma in self.cromosomas:

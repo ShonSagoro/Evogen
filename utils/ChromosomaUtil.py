@@ -3,25 +3,7 @@ import random
 from models.Chromosoma import Chromosoma
 from models.Generation import Generation
 from models.Parameter import Parameter
-
-expression = "x**2 - 5*x + 6"
-
-min_limit_x = 3
-max_limit_x = 7
-population_size = 4
-population_size_max = 8
-cross_prob = 0.90
-ind_mut_prob = 0.90
-gen_mut_prob = 0.90
-generations = 4
-
-
-resolution_ideal = 0.05
-cant_ind_cross = 2
-is_min_solution = False
-
-
-parameter=Parameter(min_limit_x, max_limit_x, population_size, population_size_max, cross_prob, ind_mut_prob,gen_mut_prob, generations, resolution_ideal, cant_ind_cross, is_min_solution)
+import matplotlib.pyplot as plt
 
 
 class ChromosomaUtil:
@@ -30,11 +12,15 @@ class ChromosomaUtil:
         self.expression = expression
         self.populations: list[Chromosoma] = []
         self.generations: list[Generation] = []
+        self.generated_figures = []
 
     def init(self):
+        self.populations: list[Chromosoma] = []
+        self.generations: list[Generation] = []
+        self.generated_figures = []
         self.make_pob_init()
         self.generations.append(Generation(0, self.populations, self.parameter.is_min_solution))
-        for i in range(0, self.parameter.generations):
+        for i in range(0, (self.parameter.generations-2)):
             peers = self.define_peers()
             cross_peers = self.cross_peers(peers)
             mutated_peers = self.mutation(cross_peers)
@@ -43,7 +29,6 @@ class ChromosomaUtil:
                 mutated_peer.set_id(self.populations[-1].id + 1)
                 self.populations.append(mutated_peer)
 
-
             self.populations = self.unique_chromosomas()
             poda_population = self.poda_gen()
             self.populations = poda_population
@@ -51,10 +36,12 @@ class ChromosomaUtil:
 
             self.populations = sorted(self.populations, key=lambda chromosoma: chromosoma.id)
 
-        self.generations.append(Generation((self.parameter.generations + 1), self.populations, self.parameter.is_min_solution))
+        self.generations.append(
+            Generation((self.parameter.generations - 1), self.populations, self.parameter.is_min_solution))
         for generation in self.generations:
             print(generation)
-
+        self.chars_populations()
+        self.chars_populations()
     def get_fx(self, population):
         try:
             result = eval(self.expression, {'x': population.x})
@@ -63,11 +50,11 @@ class ChromosomaUtil:
             print(f"Error:{e}")
 
     def make_pob_init(self):
+        print(int(self.parameter.pob))
         self.populations = [
             Chromosoma((i + 1), bin(int(random.uniform(0, self.parameter.points)))[2:].zfill(self.parameter.bits)) for i
             in
-            range(
-                self.parameter.pob)]
+            range(self.parameter.pob)]
         self.define_x(self.populations)
         self.define_fx(self.populations)
 
@@ -162,6 +149,45 @@ class ChromosomaUtil:
             chromosoma_classes[chromosoma.fx].append(chromosoma)
         return chromosoma_classes
 
+    def chars_report_general(self):
+        generation_ids = [(gen.id + 1) for gen in self.generations]
+        best_fitness = [gen.better.fx for gen in self.generations]
+        worst_fitness = [gen.worst.fx for gen in self.generations]
+        average_fitness = [gen.prom for gen in self.generations]
 
-chromosomaUtil = ChromosomaUtil(parameter, expression)
-chromosomaUtil.init()
+        # Crear una figura y ejes de Matplotlib
+        fig, ax = plt.subplots()
+
+        # Trazar las líneas
+        ax.plot(generation_ids, best_fitness, label='Mejor')
+        ax.plot(generation_ids, worst_fitness, label='Peor')
+        ax.plot(generation_ids, average_fitness, label='Promedio')
+
+        # Configurar la leyenda y etiquetas
+        ax.legend()
+        ax.set_xlabel('Generación')
+        ax.set_ylabel('Fitness')
+        ax.set_title('Resultados por generación')
+
+        # Agregar la figura a la lista
+        self.generated_figures.append(fig)
+
+    def chars_populations(self):
+        for gen in self.generations:
+            generation_id = gen.id
+            x_values = [chromosome.x for chromosome in gen.cromosomas]
+            fx_values = [chromosome.fx for chromosome in gen.cromosomas]
+
+            # Crear una figura y ejes de Matplotlib
+            fig, ax = plt.subplots()
+
+            # Trazar la dispersión
+            ax.scatter(x_values, fx_values, s=200, alpha=0.5)
+
+            # Configurar las etiquetas y el título para la generación actual
+            ax.set_xlabel('x')
+            ax.set_ylabel('fx')
+            ax.set_title(f'Dispersión de fx - Generación {(generation_id+1)}')
+
+            # Agregar la figura a la lista
+            self.generated_figures.append(fig)
