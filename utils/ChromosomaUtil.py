@@ -1,3 +1,4 @@
+import math
 import random
 
 import matplotlib.pyplot as plt
@@ -8,6 +9,16 @@ from models.Parameter import Parameter
 
 
 class ChromosomaUtil:
+    math_function = {
+        'sin': math.sin,
+        'cos': math.cos,
+        'tan': math.tan,
+        'pi': math.pi,
+        'log': math.log,
+        'e': math.e,
+        'x': None
+    }
+
     def __init__(self, parameter: Parameter, expression):
         self.parameter = parameter
         self.expression = expression
@@ -45,8 +56,10 @@ class ChromosomaUtil:
         self.chars_populations()
 
     def get_fx(self, population):
+        self.math_function['x'] = population.x
         try:
-            result = eval(self.expression, {'x': population.x})
+            result = eval(self.expression, self.math_function)
+            print(f'result:{result}')
             return result
         except Exception as e:
             print(f"Error:{e}")
