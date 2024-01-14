@@ -2,6 +2,7 @@ import threading
 import tkinter
 
 import customtkinter
+from matplotlib import pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from models.Generation import Generation
@@ -55,7 +56,7 @@ class ChromosomaGui(customtkinter.CTk):
                                    is_min_solution)
         self.chromosomaUtil = ChromosomaUtil(self.parameter, self.expression)
 
-        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.pages_root = customtkinter.CTkFrame(self, corner_radius=0, fg_color="transparent")
         self.pages_root.grid(row=1, column=0, padx=0, pady=0, sticky="nsew")
@@ -88,7 +89,7 @@ class ChromosomaGui(customtkinter.CTk):
         self.page_generation_population.grid(row=1, column=3, padx=10, pady=0, sticky="wn")
 
         self.initial_frame.grid(row=1, column=0, padx=10, pady=50, sticky="nsew")
-        self.report_frame.grid(row=1, column=0, padx=10, pady=50, sticky="nsew")
+        self.report_frame.grid(row=1, column=0, padx=10, pady=50, sticky="ew")
         self.charts_frame.grid(row=1, column=0, padx=10, pady=50, sticky="nsew")
         self.generation_population_frame.grid(row=1, column=0, padx=10, pady=50, sticky="nsew")
 
@@ -271,54 +272,51 @@ class ChromosomaGui(customtkinter.CTk):
     def init_chromosoma_util(self):
         self.chromosomaUtil.init()
         self.button.configure(state="normal")
-        self.put_the_chars(self.charts_frame)
-        self.put_generations_cards(self.report_frame)
-        self.put_population_generation(self.generation_population_frame)
+        threading.Thread(self.put_the_chars(self.charts_frame)).start()
+        threading.Thread(self.put_generations_cards(self.report_frame)).start()
+        threading.Thread(self.put_population_generation(self.generation_population_frame)).start()
 
     def put_the_chars(self, parent):
+
         scrollbar_frame = FrameScrollBar(parent, width=700, height=600, corner_radius=0, fg_color="transparent")
         scrollbar_frame.grid(row=0, column=0, padx=10, pady=50, sticky="nsew")
 
         figures_frame = customtkinter.CTkFrame(scrollbar_frame)
-        scrollbar_frame.set_content_frame(figures_frame)
+        figures_frame.grid(row=0, column=0, sticky="nsew")
 
-        for fig in self.chromosomaUtil.generated_figures:
-            self.show_figure_in_frame(fig, figures_frame)
-
-        figures_frame.bind("<Configure>", lambda e: self.pages_root.after(0, figures_frame.configure(
-            scrollregion=figures_frame.bbox("all"))))
+        for row, fig in enumerate(self.chromosomaUtil.generated_figures):
+            figure_frame = customtkinter.CTkFrame(figures_frame)
+            figure_frame.grid(row=row, column=0, sticky="nsew")
+            self.show_figure_in_frame(fig, figure_frame)
 
     def show_figure_in_frame(self, fig, parent):
         canvas = FigureCanvasTkAgg(fig, master=parent)
-        canvas.draw()
-        parent.after(0, lambda: canvas.get_tk_widget().pack(padx=10, pady=10, side="top"))
+        plt.close(fig)
+        canvas.get_tk_widget().grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
     def put_generations_cards(self, parent):
-        cards_frame = FrameScrollBar(parent, width=300, height=600, corner_radius=0, fg_color="transparent")
+        cards_frame = FrameScrollBar(parent, height=600, corner_radius=0, fg_color="transparent")
         cards_frame.grid(row=0, column=0, padx=20, pady=20)
 
         content_frame = customtkinter.CTkFrame(cards_frame)
-        content_frame.grid(row=0, column=0, sticky="nsew")
-
-        content_frame.bind("<Configure>", lambda e: self.pages_root.after(0, content_frame.configure(
-            scrollregion=content_frame.bbox("all"))))
+        content_frame.grid(row=0, column=0, sticky="news")
 
         for row, gen in enumerate(self.chromosomaUtil.generations):
             generation_frame = customtkinter.CTkFrame(content_frame)
-            generation_frame.grid(row=row, column=0, pady=10, padx=10, sticky="ew")
+            generation_frame.grid(row=row, column=0, pady=10, padx=10, sticky="news")
 
-            label_title_generation = customtkinter.CTkLabel(generation_frame, text=f"Generation {gen.id}:",
+            label_title_generation = customtkinter.CTkLabel(generation_frame, text=f"Generation {gen.id} :",
                                                             font=self.title_font)
-            label_title_generation.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
+            label_title_generation.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="ew")
 
             label_info_better = customtkinter.CTkLabel(generation_frame, text=f"Better: {gen.better.fx}")
-            label_info_better.grid(row=1, column=0, pady=(10, 0), padx=10, sticky="w")
+            label_info_better.grid(row=1, column=0, pady=(10, 0), padx=10, sticky="ew")
 
             label_info_worst = customtkinter.CTkLabel(generation_frame, text=f"Worst: {gen.worst.fx}")
-            label_info_worst.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="w")
+            label_info_worst.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="ew")
 
             label_info_prom = customtkinter.CTkLabel(generation_frame, text=f"Prom: {gen.prom}")
-            label_info_prom.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="w")
+            label_info_prom.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="ew")
 
         cards_frame.grid_rowconfigure(0, weight=1)
         cards_frame.grid_columnconfigure(0, weight=1)
@@ -330,14 +328,11 @@ class ChromosomaGui(customtkinter.CTk):
         content_frame = customtkinter.CTkFrame(cards_frame)
         content_frame.grid(row=0, column=0, sticky="nsew")
 
-        content_frame.bind("<Configure>", lambda e: self.pages_root.after(0, content_frame.configure(
-            scrollregion=content_frame.bbox("all"))))
-
         for row, gen in enumerate(self.chromosomaUtil.generations):
             generation_frame = customtkinter.CTkFrame(content_frame)
             generation_frame.grid(row=row, column=0, pady=10, padx=10, sticky="ew")
 
-            label_title_generation = customtkinter.CTkLabel(generation_frame, text=f"Generation {gen.id}:",
+            label_title_generation = customtkinter.CTkLabel(generation_frame, text=f"Generation {gen.id} :",
                                                             font=self.title_font)
             label_title_generation.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
 
@@ -363,5 +358,5 @@ class ChromosomaGui(customtkinter.CTk):
         population_frame = customtkinter.CTkFrame(parent)
         population_frame.grid(row=row, column=0, pady=10, padx=10, sticky="ew")
         for row, crom in enumerate(gen.chromosomas):
-            label_info_chromosome = customtkinter.CTkLabel(population_frame, text=f"{(row+1)}: {crom.__str__()}")
+            label_info_chromosome = customtkinter.CTkLabel(population_frame, text=f"{(row + 1)}: {crom.__str__()}")
             label_info_chromosome.grid(row=row, column=0, pady=(10, 0), padx=10, sticky="w")
