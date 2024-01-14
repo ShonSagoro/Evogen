@@ -1,9 +1,10 @@
 import random
 
+import matplotlib.pyplot as plt
+
 from models.Chromosoma import Chromosoma
 from models.Generation import Generation
 from models.Parameter import Parameter
-import matplotlib.pyplot as plt
 
 
 class ChromosomaUtil:
@@ -20,7 +21,7 @@ class ChromosomaUtil:
         self.generated_figures = []
         self.make_pob_init()
         self.generations.append(Generation(0, self.populations, self.parameter.is_min_solution))
-        for i in range(0, (self.parameter.generations-2)):
+        for i in range(0, (self.parameter.generations - 2)):
             peers = self.define_peers()
             cross_peers = self.cross_peers(peers)
             mutated_peers = self.mutation(cross_peers)
@@ -42,6 +43,7 @@ class ChromosomaUtil:
             print(generation)
         self.chars_report_general()
         self.chars_populations()
+
     def get_fx(self, population):
         try:
             result = eval(self.expression, {'x': population.x})
@@ -150,44 +152,39 @@ class ChromosomaUtil:
         return chromosoma_classes
 
     def chars_report_general(self):
+        plt.style.use('dark_background')
+
         generation_ids = [(gen.id + 1) for gen in self.generations]
         best_fitness = [gen.better.fx for gen in self.generations]
         worst_fitness = [gen.worst.fx for gen in self.generations]
         average_fitness = [gen.prom for gen in self.generations]
 
-        # Crear una figura y ejes de Matplotlib
         fig, ax = plt.subplots()
 
-        # Trazar las líneas
-        ax.plot(generation_ids, best_fitness, label='Mejor')
-        ax.plot(generation_ids, worst_fitness, label='Peor')
-        ax.plot(generation_ids, average_fitness, label='Promedio')
+        ax.plot(generation_ids, best_fitness, label='Mejor', marker='o')
+        ax.plot(generation_ids, worst_fitness, label='Peor', marker='v')
+        ax.plot(generation_ids, average_fitness, label='Promedio', marker='s')
 
-        # Configurar la leyenda y etiquetas
         ax.legend()
         ax.set_xlabel('Generación')
         ax.set_ylabel('Fitness')
         ax.set_title('Resultados por generación')
 
-        # Agregar la figura a la lista
         self.generated_figures.append(fig)
 
     def chars_populations(self):
         for gen in self.generations:
+            plt.style.use('dark_background')
             generation_id = gen.id
             x_values = [chromosome.x for chromosome in gen.chromosomas]
             fx_values = [chromosome.fx for chromosome in gen.chromosomas]
 
-            # Crear una figura y ejes de Matplotlib
             fig, ax = plt.subplots()
 
-            # Trazar la dispersión
             ax.scatter(x_values, fx_values, s=200, alpha=0.5)
 
-            # Configurar las etiquetas y el título para la generación actual
             ax.set_xlabel('x')
             ax.set_ylabel('fx')
-            ax.set_title(f'Dispersión de fx - Generación {(generation_id+1)}')
+            ax.set_title(f'Dispersión de fx - Generación {(generation_id + 1)}')
 
-            # Agregar la figura a la lista
             self.generated_figures.append(fig)
