@@ -40,7 +40,7 @@ class ChromosomaUtil:
             Generation((self.parameter.generations - 1), self.populations, self.parameter.is_min_solution))
         for generation in self.generations:
             print(generation)
-        self.chars_populations()
+        self.chars_report_general()
         self.chars_populations()
     def get_fx(self, population):
         try:
@@ -175,8 +175,8 @@ class ChromosomaUtil:
     def chars_populations(self):
         for gen in self.generations:
             generation_id = gen.id
-            x_values = [chromosome.x for chromosome in gen.cromosomas]
-            fx_values = [chromosome.fx for chromosome in gen.cromosomas]
+            x_values = [chromosome.x for chromosome in gen.chromosomas]
+            fx_values = [chromosome.fx for chromosome in gen.chromosomas]
 
             # Crear una figura y ejes de Matplotlib
             fig, ax = plt.subplots()
