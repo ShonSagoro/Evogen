@@ -3,7 +3,7 @@ import math
 
 class Parameter:
     def __init__(self, min_limit, max_limit, pob, pob_max, cross_prob, ind_mut_prob, gen_mut_prob, generations,
-                 resolution_ideal, cant_ind_cross):
+                 resolution_ideal, cant_ind_cross, is_min_solution):
         self.min_limit = min_limit
         self.max_limit = max_limit
         self.pob = pob
@@ -18,7 +18,7 @@ class Parameter:
         self.jumps= self.define_jumps()
         self.points=self.define_points()
         self.bits=self.define_bits()
-
+        self.is_min_solution=is_min_solution
     def define_range(self) -> int:
         return self.max_limit - self.min_limit
 
