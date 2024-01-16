@@ -14,7 +14,7 @@ class Generation:
         result = 0
         for cromosoma in self.chromosomas:
             result += cromosoma.fx
-        self.prom = result / len(self.chromosomas)
+        self.prom =float(f"{ result / len(self.chromosomas):.4f}")
 
     def define_fitness(self):
         if self.is_min_fn:

@@ -7,7 +7,7 @@ class Chromosoma:
         self.fx = None
 
     def __str__(self):
-        return f"Cromosoma(id={self.id}, i={self.i}, x={self.x}, fx={self.fx}, bin={self.bits})"
+        return f"Cromosoma(id={self.id},i={self.i}, x={self.x}, fx={self.fx}, bin={self.bits})"
 
     def define_i(self):
         return int(self.bits, 2)
@@ -17,6 +17,10 @@ class Chromosoma:
 
     def set_fx(self, fx):
         self.fx = fx
+
+    def set_id_mutate(self, id):
+        self.id=id
+        return self
 
     def set_id(self, id):
         self.id=id

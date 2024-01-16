@@ -14,7 +14,6 @@ class FrameScrollBar(customtkinter.CTkScrollableFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        # add widgets onto the frame...
         self.label = customtkinter.CTkLabel(self)
         self.label.grid(row=0, column=0, padx=20)
 
@@ -33,20 +32,20 @@ class ChromosomaGui(customtkinter.CTk):
         # self.geometry('1000x780')
         self._set_appearance_mode("dark")
 
-        self.expression = "x**2 - 5*x + 6"
+        self.expression = "x**3 - x**3 * cos(5*x)"
 
-        population_size = 4
-        population_size_max = 8
+        population_size = 8
+        population_size_max = 10
         cant_ind_cross = 2
 
-        min_limit_x = 3
-        max_limit_x = 7
+        min_limit_x = 2
+        max_limit_x = 100
 
-        ind_mut_prob = 0.90
-        gen_mut_prob = 0.90
+        ind_mut_prob = 0.60
+        gen_mut_prob = 0.40
 
-        resolution_ideal = 0.05
-        generations = 4
+        resolution_ideal = 0.1
+        generations = 2
 
         is_min_solution = False
         self.parameter = Parameter(min_limit_x, max_limit_x, population_size, population_size_max,
@@ -255,6 +254,9 @@ class ChromosomaGui(customtkinter.CTk):
         page.grid(row=0, column=0, sticky="nsew")
 
     def button_callback(self):
+        self.page_report.configure(state="disabled")
+        self.page_charts.configure(state="disabled")
+        self.page_generation_population.configure(state="disabled")
         self.label_progressbar.configure(text="Info: Recolectando datos")
         self.expression = self.entry_expression.get()
         is_min_solution = bool(self.type_solution_val.get())
@@ -262,10 +264,8 @@ class ChromosomaGui(customtkinter.CTk):
         population_size_max = int(self.entry_population_size_max.get())
         cant_ind_cross = int(self.entry_cant_ind_cross.get())
 
-        print(type(population_size))
-
-        min_limit_x = int(self.entry_min_x.get())
-        max_limit_x = int(self.entry_max_x.get())
+        min_limit_x = float(self.entry_min_x.get())
+        max_limit_x = float(self.entry_max_x.get())
 
         ind_mut_prob = float(self.entry_ind_mut_prob.get())
         gen_mut_prob = float(self.entry_gen_mut_prob.get())
@@ -286,26 +286,27 @@ class ChromosomaGui(customtkinter.CTk):
 
     def init_chromosoma_util(self):
         self.chromosomaUtil.init()
-        self.button.configure(state="normal")
-        threading.Thread(self.put_the_chars(self.charts_frame)).start()
-        threading.Thread(self.put_generations_cards(self.report_frame)).start()
-        threading.Thread(self.put_population_generation(self.generation_population_frame)).start()
-        self.progressbar.set(0.5)
-        self.chars_event.wait()
-        self.generations_event.wait()
-        self.population_event.wait()
 
+        self.label_progressbar.configure(text="Info: graficando")
+        self.put_the_chars(self.charts_frame)
+        self.page_charts.configure(state="normal")
+
+        self.label_progressbar.configure(text="Info: Reportando")
+        self.put_generations_cards(self.report_frame)
+        self.page_report.configure(state="normal")
+
+        self.label_progressbar.configure(text="Info: Reporte mas extendido")
+        self.put_population_generation(self.generation_population_frame)
+        self.page_generation_population.configure(state="normal")
+
+        self.progressbar.set(0.5)
+
+        self.button.configure(state="normal")
         self.progressbar.stop()
         self.progressbar.set(1)
         self.label_progressbar.configure(text="Info: Listo, checa el resto de pestañas")
-        self.bar_frame.after(5000, self.try_again)
-
-    def try_again(self):
-        self.progressbar.set(0)
-        self.label_progressbar.configure(text="Info: Vuelve a presionar start para realizar otra vez el calculo")
 
     def put_the_chars(self, parent):
-
         scrollbar_frame = FrameScrollBar(parent, width=700, height=600, corner_radius=0, fg_color="transparent")
         scrollbar_frame.grid(row=0, column=0, padx=10, pady=50, sticky="nsew")
 
@@ -331,65 +332,74 @@ class ChromosomaGui(customtkinter.CTk):
         content_frame.grid(row=0, column=0, sticky="news")
         content_frame.grid_columnconfigure(0, weight=1)
 
-        for row, gen in enumerate(reversed(self.chromosomaUtil.generations)):
-            generation_frame = customtkinter.CTkFrame(content_frame, width=600)
-            generation_frame.grid(row=row, column=0, pady=10, padx=10, sticky="ew")
-
-            label_title_generation = customtkinter.CTkLabel(generation_frame, text=f"Generation {gen.id} :",
-                                                            font=self.title_font)
-            label_title_generation.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
-            generation_frame.grid_columnconfigure(0, weight=1)
-
-            report_frame = customtkinter.CTkFrame(generation_frame, width=600)
-            report_frame.grid(row=1, column=0, pady=10, padx=10, sticky="nwes")
-            report_frame.grid_columnconfigure(0, weight=1)
-
-            label_info_better = customtkinter.CTkLabel(report_frame, text=f"Better f(x): {gen.better.fx}")
-            label_info_better.grid(row=1, column=0, pady=(10, 0), padx=10, sticky="we")
-
-            label_info_worst = customtkinter.CTkLabel(report_frame, text=f"Worst f(x): {gen.worst.fx}")
-            label_info_worst.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="we")
-
-            label_info_prom = customtkinter.CTkLabel(report_frame, text=f"Prom f(x): {gen.prom}")
-            label_info_prom.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="we")
+        self.put_generations(self.chromosomaUtil.generations[-1], content_frame, 0)
+        self.put_generations(self.chromosomaUtil.generations[0], content_frame, 1)
 
         cards_frame.grid_rowconfigure(0, weight=1)
         cards_frame.grid_columnconfigure(0, weight=1)
         self.generations_event.set()
 
+    def put_generations(self, gen: Generation, parent, row):
+        generation_frame = customtkinter.CTkFrame(parent, width=600)
+        generation_frame.grid(row=row, column=0, pady=10, padx=10, sticky="ew")
+
+        label_title_generation = customtkinter.CTkLabel(generation_frame, text=f"Generation {gen.id} :",
+                                                        font=self.title_font)
+        label_title_generation.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
+        generation_frame.grid_columnconfigure(0, weight=1)
+
+        report_frame = customtkinter.CTkFrame(generation_frame, width=600)
+        report_frame.grid(row=1, column=0, pady=10, padx=10, sticky="nwes")
+        report_frame.grid_columnconfigure(0, weight=1)
+
+        label_info_better = customtkinter.CTkLabel(report_frame, text=f"Better f(x): {gen.better.fx}")
+        label_info_better.grid(row=1, column=0, pady=(10, 0), padx=10, sticky="we")
+
+        label_info_worst = customtkinter.CTkLabel(report_frame, text=f"Worst f(x): {gen.worst.fx}")
+        label_info_worst.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="we")
+
+        label_info_prom = customtkinter.CTkLabel(report_frame, text=f"Prom f(x): {gen.prom}")
+        label_info_prom.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="we")
+        self.label_progressbar.configure(text=f"Info: Reportando:{gen.id}")
+
     def put_population_generation(self, parent):
-        cards_frame = FrameScrollBar(parent, width=600, height=600, corner_radius=0, fg_color="transparent")
+        cards_frame = FrameScrollBar(parent, width=800, height=600, corner_radius=0, fg_color="transparent")
         cards_frame.grid(row=0, column=0, padx=20, pady=20)
 
         content_frame = customtkinter.CTkFrame(cards_frame)
         content_frame.grid(row=0, column=0, sticky="nsew")
 
-        for row, gen in enumerate(reversed(self.chromosomaUtil.generations)):
-            generation_frame = customtkinter.CTkFrame(content_frame)
-            generation_frame.grid(row=row, column=0, pady=10, padx=10, sticky="ew")
-
-            label_title_generation = customtkinter.CTkLabel(generation_frame, text=f"Generation {gen.id} :",
-                                                            font=self.title_font)
-            label_title_generation.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
-
-            label_info_better = customtkinter.CTkLabel(generation_frame, text=f"Better f(x): {gen.better.fx}")
-            label_info_better.grid(row=1, column=0, pady=(10, 0), padx=10, sticky="w")
-
-            label_info_worst = customtkinter.CTkLabel(generation_frame, text=f"Worst f(x): {gen.worst.fx}")
-            label_info_worst.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="w")
-
-            label_info_prom = customtkinter.CTkLabel(generation_frame, text=f"Prom f(x): {gen.prom}")
-            label_info_prom.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="w")
-
-            label_info_population_title = customtkinter.CTkLabel(generation_frame, text="Poputations :{")
-            label_info_population_title.grid(row=4, column=0, pady=(10, 0), padx=10, sticky="w")
-            self.put_population(gen, generation_frame, 5)
-            label_info_population_title = customtkinter.CTkLabel(generation_frame, text="}")
-            label_info_population_title.grid(row=6, column=0, pady=(10, 0), padx=10, sticky="w")
+        self.put_population_card(self.chromosomaUtil.generations[-1], content_frame, 0)
+        self.put_population_card(self.chromosomaUtil.generations[0], content_frame, 1)
 
         cards_frame.grid_rowconfigure(0, weight=1)
         cards_frame.grid_columnconfigure(0, weight=1)
         self.population_event.set()
+
+    def put_population_card(self, gen: Generation, parent, row):
+        self.label_progressbar.configure(text=f"Info:Haciendo el reporte extendido:{gen.id}")
+        generation_frame = customtkinter.CTkFrame(parent)
+        generation_frame.grid(row=row, column=0, pady=10, padx=10, sticky="ew")
+
+        label_title_generation = customtkinter.CTkLabel(generation_frame, text=f"Generation {gen.id} :",
+                                                        font=self.title_font)
+        label_title_generation.grid(row=0, column=0, pady=(10, 0), padx=10, sticky="w")
+
+        label_info_better = customtkinter.CTkLabel(generation_frame, text=f"Better f(x): {gen.better.fx}")
+        label_info_better.grid(row=1, column=0, pady=(10, 0), padx=10, sticky="w")
+
+        label_info_worst = customtkinter.CTkLabel(generation_frame, text=f"Worst f(x): {gen.worst.fx}")
+        label_info_worst.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="w")
+
+        label_info_prom = customtkinter.CTkLabel(generation_frame, text=f"Prom f(x): {gen.prom}")
+        label_info_prom.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="w")
+
+        label_info_population_title = customtkinter.CTkLabel(generation_frame, text="Poputations :{")
+        label_info_population_title.grid(row=4, column=0, pady=(10, 0), padx=10, sticky="w")
+        self.put_population(gen, generation_frame, 5)
+        label_info_population_title = customtkinter.CTkLabel(generation_frame, text="}")
+        label_info_population_title.grid(row=6, column=0, pady=(10, 0), padx=10, sticky="w")
+        self.label_progressbar.configure(text=f"Info: Reportando extenso listo:{gen.id}")
 
     def put_population(self, gen: Generation, parent, row):
         population_frame = customtkinter.CTkFrame(parent)
@@ -397,3 +407,5 @@ class ChromosomaGui(customtkinter.CTk):
         for row, crom in enumerate(gen.chromosomas):
             label_info_chromosome = customtkinter.CTkLabel(population_frame, text=f"{(row + 1)}: {crom.__str__()}")
             label_info_chromosome.grid(row=row, column=0, pady=(10, 0), padx=10, sticky="w")
+            self.label_progressbar.configure(text=f"Info:añadiendo al cromosoma: {row}, de la generacion:{gen.id}")
+

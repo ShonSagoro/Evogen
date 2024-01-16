@@ -18,11 +18,14 @@ class Parameter:
         self.points=self.define_points()
         self.bits=self.define_bits()
         self.is_min_solution=is_min_solution
+
+
     def define_range(self) -> int:
         return self.max_limit - self.min_limit
 
     def define_difx(self):
-        return self.range / (2 ** self.bits - 1)
+        print(float(f"{self.range / (2 ** self.bits - 1):.4f}"))
+        return float(f"{self.range / (2 ** self.bits - 1):.4f}")
 
     # bits=log base 2 (points)
     def define_bits(self):

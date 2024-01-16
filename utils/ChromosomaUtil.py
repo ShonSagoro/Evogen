@@ -1,3 +1,4 @@
+import numpy as np
 import math
 import random
 
@@ -10,79 +11,76 @@ from models.Parameter import Parameter
 
 class ChromosomaUtil:
     math_function = {
-        'sin': math.sin,
-        'cos': math.cos,
-        'tan': math.tan,
-        'pi': math.pi,
-        'log': math.log,
-        'e': math.e,
+        'sin': np.sin,
+        'cos': np.cos,
+        'tan': np.tan,
+        'pi': np.pi,
+        'log': np.log,
+        'e': np.e,
         'x': None
     }
 
     def __init__(self, parameter: Parameter, expression):
         self.parameter = parameter
         self.expression = expression
-        self.populations: list[Chromosoma] = []
-        self.generations: list[Generation] = []
+        self.populations = []
+        self.generations = []
         self.generated_figures = []
 
     def init(self):
-        self.populations: list[Chromosoma] = []
-        self.generations: list[Generation] = []
+        self.populations = []
+        self.generations = []
         self.generated_figures = []
         self.make_pob_init()
         self.generations.append(Generation(0, self.populations, self.parameter.is_min_solution))
+
         for i in range(0, (self.parameter.generations - 2)):
+            print(f"generacion: {i}")
             peers = self.define_peers()
             cross_peers = self.cross_peers(peers)
             mutated_peers = self.mutation(cross_peers)
-
-            for mutated_peer in mutated_peers:
-                mutated_peer.set_id(self.populations[-1].id + 1)
-                self.populations.append(mutated_peer)
+            self.add_mutated_population(mutated_peers)
 
             self.populations = self.unique_chromosomas()
-            poda_population = self.poda_gen()
-            self.populations = poda_population
+            purge = self.poda_gen()
+            self.populations = purge
+
             self.generations.append(Generation((i + 1), self.populations, self.parameter.is_min_solution))
 
-            self.populations = sorted(self.populations, key=lambda chromosoma: chromosoma.id)
-
-        self.generations.append(
-            Generation((self.parameter.generations - 1), self.populations, self.parameter.is_min_solution))
-        for generation in self.generations:
-            print(generation)
         self.chars_report_general()
         self.chars_populations()
+
+    def add_mutated_population(self, mutated_peers):
+        new_id = self.populations[-1].id + 1
+        mutated_peers = [mutated_peer.set_id_mutate(new_id + i) for i, mutated_peer in enumerate(mutated_peers)]
+        self.populations.extend(mutated_peers)
 
     def get_fx(self, population):
         self.math_function['x'] = population.x
         try:
-            result = eval(self.expression, self.math_function)
-            print(f'result:{result}')
+            result = float(f"{eval(self.expression, self.math_function):.4f}")
             return result
         except Exception as e:
             print(f"Error:{e}")
 
     def make_pob_init(self):
-        print(int(self.parameter.pob))
         self.populations = [
             Chromosoma((i + 1), bin(int(random.uniform(0, self.parameter.points)))[2:].zfill(self.parameter.bits)) for i
             in
             range(self.parameter.pob)]
-        self.define_x(self.populations)
-        self.define_fx(self.populations)
+        self.evaluation_x(self.populations)
+        self.evaluation_fx(self.populations)
 
-    def define_x(self, populations):
+    def evaluation_x(self, populations):
         for population in populations:
             if population.x is None:
                 x = self.get_x(population)
                 population.set_x(x)
 
     def get_x(self, population):
-        return self.parameter.min_limit + population.i * self.parameter.resolution_ideal
+        return float(f"{self.parameter.min_limit + population.i * self.parameter.resolution_ideal:.4f}")
 
-    def define_fx(self, populations):
+    def evaluation_fx(self, populations):
         for population in populations:
             if population.fx is None:
                 result = self.get_fx(population)
@@ -99,13 +97,13 @@ class ChromosomaUtil:
 
     def cross_peers(self, peers):
         descendants = []
+        print(f"Cross")
         for peer in peers:
-            chromosoma_1 = peer[0]
-            chromosoma_2 = peer[1]
-            cross_point = random.randint(1, len(chromosoma_1.bits) - 1)
-            chromosoma_1_child_bits = chromosoma_1.bits[:cross_point] + chromosoma_2.bits[cross_point:]
-            chromosoma_2_child_bits = chromosoma_2.bits[:cross_point] + chromosoma_1.bits[cross_point:]
+            cross_point = random.randint(1, len(peer[0].bits) - 1)
+            chromosoma_1_child_bits = peer[0].bits[:cross_point] + peer[1].bits[cross_point:]
+            chromosoma_2_child_bits = peer[1].bits[:cross_point] + peer[0].bits[cross_point:]
             descendants.append((Chromosoma(0, chromosoma_1_child_bits), Chromosoma(0, chromosoma_2_child_bits)))
+        print(f"Cross final")
         return descendants
 
     def mutation(self, descendants):
@@ -117,8 +115,9 @@ class ChromosomaUtil:
                     mutated_chromosomes.append(mut_gen)
                 else:
                     mutated_chromosomes.append(gen)
-        self.define_x(mutated_chromosomes)
-        self.define_fx(mutated_chromosomes)
+        self.evaluation_x(mutated_chromosomes)
+        self.evaluation_fx(mutated_chromosomes)
+        print(f"Mutation final")
         return mutated_chromosomes
 
     def gen_mutation(self, child: Chromosoma):
@@ -130,34 +129,32 @@ class ChromosomaUtil:
                     j = random.randint(0, len(gens) - 1)
                 gens[i], gens[j] = gens[j], gens[i]
         child.bits = ''.join(gens)
-        child_mutated = Chromosoma(0, child.bits)
-        return child_mutated
+        return Chromosoma(0, child.bits)
 
     def poda_gen(self):
+        print("Podar")
         chromosoma_final = []
         chromosoma_classes = self.define_classes()
 
-        while len(chromosoma_final) <= self.parameter.pob_max and len(chromosoma_classes.keys()) > 0:
-            random_class = random.choice(list(chromosoma_classes.keys()))
-            chromosoma_select = chromosoma_classes[random_class]
-            chromosoma_final.extend(chromosoma_select)
-            chromosoma_classes.pop(random_class)
+        print(list(chromosoma_classes.keys()))
 
+        while len(chromosoma_final) < self.parameter.pob_max and chromosoma_classes:
+            random_class = random.choice(list(chromosoma_classes.keys()))
+            chromosoma_select = np.random.choice(chromosoma_classes[random_class])
+            chromosoma_final.append(chromosoma_select)
+            chromosoma_classes[random_class].remove(chromosoma_select)
+            if not chromosoma_classes[random_class]:
+                del chromosoma_classes[random_class]
+
+        print(len(chromosoma_final))
         return chromosoma_final
 
     def unique_chromosomas(self):
-        unique_population_set = set()
-        unique_population = []
-        for chromosoma in self.populations:
-            if chromosoma.i not in unique_population:
-                unique_population_set.add(chromosoma)
-                unique_population.append(chromosoma)
-        return unique_population
+        return list(set(self.populations))
 
     def define_classes(self):
         chromosoma_classes = {}
         chromosoma_sorted_fitness = sorted(self.populations, key=lambda chromosoma: chromosoma.fx)
-
         for chromosoma in chromosoma_sorted_fitness:
             if chromosoma.fx not in chromosoma_classes:
                 chromosoma_classes[chromosoma.fx] = []
@@ -186,18 +183,24 @@ class ChromosomaUtil:
         self.generated_figures.append(fig)
 
     def chars_populations(self):
-        for gen in self.generations:
-            plt.style.use('dark_background')
-            generation_id = gen.id
-            x_values = [chromosome.x for chromosome in gen.chromosomas]
-            fx_values = [chromosome.fx for chromosome in gen.chromosomas]
+        self.char(self.generations[-1])
+        self.char(self.generations[0])
 
-            fig, ax = plt.subplots()
+    def char(self, gen):
+        plt.style.use('dark_background')
+        generation_id = gen.id
+        x_values = np.array([chromosome.x for chromosome in gen.chromosomas])
+        fx_values = np.array([chromosome.fx for chromosome in gen.chromosomas])
 
-            ax.scatter(x_values, fx_values, s=200, alpha=0.5)
+        fig, ax = plt.subplots()
 
-            ax.set_xlabel('x')
-            ax.set_ylabel('fx')
-            ax.set_title(f'Dispersión de fx - Generación {(generation_id + 1)}')
+        ax.scatter(x_values, fx_values, s=200, alpha=0.5)
 
-            self.generated_figures.append(fig)
+        if gen.better:
+            ax.scatter(gen.better.x, gen.better.fx, color='red', s=200, label='Mejor Cromosoma')
+
+        ax.set_xlabel('x')
+        ax.set_ylabel('fx')
+        ax.set_title(f'Dispersión de fx - Generación {(generation_id + 1)}')
+
+        self.generated_figures.append(fig)
