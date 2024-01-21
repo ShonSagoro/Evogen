@@ -2,6 +2,9 @@ import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+import cv2
+import os
+from io import BytesIO
 
 from models.Chromosoma import Chromosoma
 from models.Generation import Generation
@@ -213,11 +216,29 @@ class ChromosomaUtil:
         self.generated_figures.append(fig)
 
     def chars_populations(self):
-        self.char(self.generations[-1])
-        self.char(self.generations[1])
+        self.generated_figures.append(self.char(self.generations[-1]))
+        self.generated_figures.append(self.char(self.generations[1]))
+
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # or use 'XVID'
+        out = cv2.VideoWriter('public/output.mp4', fourcc, 3.0, (640, 480))
+        total_generations = len(self.generations)
+        max_extra_images = min(20, total_generations - 2)
+        for i, gen in enumerate(self.generations):
+            print(f"Generacion fig: {gen.id}")
+            if i == 0 or i == total_generations - 1 or (i % ((total_generations - 2) // max_extra_images) == 0):
+                fig=self.char(gen)
+                with BytesIO() as img_stream:
+                    fig.savefig(img_stream, format='png')
+                    img_stream.seek(0)
+                    img = cv2.imdecode(np.frombuffer(img_stream.read(), np.uint8), 1)
+                out.write(img)
+                plt.close(fig)
+            print(f"Complete Generacion fig: {gen.id}")
+        out.release()
 
     def char(self, gen):
         plt.style.use('dark_background')
+
         generation_id = gen.id
         x_values = np.array([chromosome.x for chromosome in gen.chromosomas])
         fx_values = np.array([chromosome.fx for chromosome in gen.chromosomas])
@@ -236,4 +257,4 @@ class ChromosomaUtil:
         ax.set_ylabel('fx')
         ax.set_title(f'Dispersión de fx - Generación {generation_id}')
 
-        self.generated_figures.append(fig)
+        return fig
