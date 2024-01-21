@@ -159,14 +159,21 @@ class ChromosomaUtil:
         chromosoma_classes = self.define_classes()
 
         better = None
+        worst = None
         if self.parameter.is_min_solution:
             better = self.min_val()
+            worst = self.max_val()
         else:
             better = self.max_val()
+            worst = self.min_val()
 
         if better not in chromosoma_final:
             chromosoma_final.append(better)
             self.delete_data(chromosoma_classes, better)
+
+        if worst not in chromosoma_final:
+            chromosoma_final.append(worst)
+            self.delete_data(chromosoma_classes, worst)
 
         while len(chromosoma_final) < self.parameter.pob_max and chromosoma_classes:
             random_class = random.choice(list(chromosoma_classes.keys()))
@@ -211,7 +218,7 @@ class ChromosomaUtil:
         ax.legend()
         ax.set_xlabel('Generación')
         ax.set_ylabel('Fitness')
-        ax.set_title('Resultados por generación')
+        ax.set_title('Resultados de la evolucion por generación')
 
         self.generated_figures.append(fig)
 
@@ -253,8 +260,11 @@ class ChromosomaUtil:
         if gen.worst:
             ax.scatter(gen.worst.x, gen.worst.fx, color='blue', s=200, label='Peor Cromosoma')
 
+        ax.legend()
         ax.set_xlabel('x')
         ax.set_ylabel('fx')
         ax.set_title(f'Dispersión de fx - Generación {generation_id}')
+
+        ax.set_xlim(self.parameter.min_limit, self.parameter.max_limit)
 
         return fig

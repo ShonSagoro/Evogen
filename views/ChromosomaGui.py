@@ -35,17 +35,17 @@ class ChromosomaGui(customtkinter.CTk):
         self.expression = "x**3 - x**3 * cos(5*x)"
 
         population_size = 8
-        population_size_max = 10
+        population_size_max = 100
         cant_ind_cross = 2
 
-        min_limit_x = 2
-        max_limit_x = 100
+        min_limit_x = 0
+        max_limit_x = 2
 
-        ind_mut_prob = 0.60
-        gen_mut_prob = 0.40
+        ind_mut_prob = 0.10
+        gen_mut_prob = 0.10
 
         resolution_ideal = 0.1
-        generations = 2
+        generations = 100
 
         is_min_solution = False
         self.parameter = Parameter(min_limit_x, max_limit_x, population_size, population_size_max,
