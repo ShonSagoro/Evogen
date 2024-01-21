@@ -358,8 +358,14 @@ class ChromosomaGui(customtkinter.CTk):
         label_info_worst = customtkinter.CTkLabel(report_frame, text=f"Worst f(x): {gen.worst.fx}")
         label_info_worst.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="we")
 
+        label_info_betterx = customtkinter.CTkLabel(report_frame, text=f"Better x: {gen.better.x}")
+        label_info_betterx.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="we")
+
+        label_info_worstx = customtkinter.CTkLabel(report_frame, text=f"Worst x: {gen.worst.x}")
+        label_info_worstx.grid(row=4, column=0, pady=(10, 0), padx=10, sticky="we")
+
         label_info_prom = customtkinter.CTkLabel(report_frame, text=f"Prom f(x): {gen.prom}")
-        label_info_prom.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="we")
+        label_info_prom.grid(row=5, column=0, pady=(10, 0), padx=10, sticky="we")
         self.label_progressbar.configure(text=f"Info: Reportando:{gen.id}")
 
     def put_population_generation(self, parent):
@@ -387,18 +393,23 @@ class ChromosomaGui(customtkinter.CTk):
 
         label_info_better = customtkinter.CTkLabel(generation_frame, text=f"Better f(x): {gen.better.fx}")
         label_info_better.grid(row=1, column=0, pady=(10, 0), padx=10, sticky="w")
+        label_info_betterx = customtkinter.CTkLabel(generation_frame, text=f"Better x: {gen.better.x}")
+        label_info_betterx.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="w")
 
         label_info_worst = customtkinter.CTkLabel(generation_frame, text=f"Worst f(x): {gen.worst.fx}")
-        label_info_worst.grid(row=2, column=0, pady=(10, 0), padx=10, sticky="w")
+        label_info_worst.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="w")
+
+        label_info_worstx = customtkinter.CTkLabel(generation_frame, text=f"Worst x {gen.worst.x}")
+        label_info_worstx.grid(row=4, column=0, pady=(10, 0), padx=10, sticky="w")
 
         label_info_prom = customtkinter.CTkLabel(generation_frame, text=f"Prom f(x): {gen.prom}")
-        label_info_prom.grid(row=3, column=0, pady=(10, 0), padx=10, sticky="w")
+        label_info_prom.grid(row=5, column=0, pady=(10, 0), padx=10, sticky="w")
 
         label_info_population_title = customtkinter.CTkLabel(generation_frame, text="Poputations :{")
-        label_info_population_title.grid(row=4, column=0, pady=(10, 0), padx=10, sticky="w")
+        label_info_population_title.grid(row=6, column=0, pady=(10, 0), padx=10, sticky="w")
         self.put_population(gen, generation_frame, 5)
         label_info_population_title = customtkinter.CTkLabel(generation_frame, text="}")
-        label_info_population_title.grid(row=6, column=0, pady=(10, 0), padx=10, sticky="w")
+        label_info_population_title.grid(row=7, column=0, pady=(10, 0), padx=10, sticky="w")
         self.label_progressbar.configure(text=f"Info: Reportando extenso listo:{gen.id}")
 
     def put_population(self, gen: Generation, parent, row):

@@ -1,8 +1,7 @@
-import numpy as np
-import math
 import random
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from models.Chromosoma import Chromosoma
 from models.Generation import Generation
@@ -34,7 +33,8 @@ class ChromosomaUtil:
         self.make_pob_init()
         self.generations.append(Generation(0, self.populations, self.parameter.is_min_solution))
 
-        for i in range(0, (self.parameter.generations - 2)):
+        for i in range(0, self.parameter.generations):
+            print(f"Bits{self.parameter.bits}")
             print(f"generacion: {i}")
             peers = self.define_peers()
             cross_peers = self.cross_peers(peers)
@@ -44,8 +44,8 @@ class ChromosomaUtil:
             self.populations = self.unique_chromosomas()
             purge = self.poda_gen()
             self.populations = purge
-
             self.generations.append(Generation((i + 1), self.populations, self.parameter.is_min_solution))
+
 
         self.chars_report_general()
         self.chars_populations()
@@ -78,7 +78,7 @@ class ChromosomaUtil:
                 population.set_x(x)
 
     def get_x(self, population):
-        return float(f"{self.parameter.min_limit + population.i * self.parameter.resolution_ideal:.4f}")
+        return float(f"{self.parameter.min_limit + population.i * self.parameter.better_delta:.4f}")
 
     def evaluation_fx(self, populations):
         for population in populations:
@@ -129,25 +129,55 @@ class ChromosomaUtil:
                     j = random.randint(0, len(gens) - 1)
                 gens[i], gens[j] = gens[j], gens[i]
         child.bits = ''.join(gens)
-        return Chromosoma(0, child.bits)
+        new_x = self.check_x_limits(int(child.bits, 2))
+        mutated_bits = self.get_bits_from_x(new_x)
+
+        return Chromosoma(0, mutated_bits)
+
+    def check_x_limits(self, x: float) -> float:
+        x = max(self.parameter.min_limit, min(self.parameter.max_limit, x))
+
+        return x
+
+    def get_bits_from_x(self, x: float) -> str:
+        decimal_value = int((x - self.parameter.min_limit) / self.parameter.resolution_ideal)
+
+        return bin(decimal_value)[2:].zfill(self.parameter.bits)
+
+    def min_val(self):
+        return min(self.populations, key=lambda chromosoma: chromosoma.fx)
+
+    def max_val(self):
+        return max(self.populations, key=lambda chromosoma: chromosoma.fx)
 
     def poda_gen(self):
         print("Podar")
         chromosoma_final = []
         chromosoma_classes = self.define_classes()
 
-        print(list(chromosoma_classes.keys()))
+        better = None
+        if self.parameter.is_min_solution:
+            better = self.min_val()
+        else:
+            better = self.max_val()
+
+        if better not in chromosoma_final:
+            chromosoma_final.append(better)
+            self.delete_data(chromosoma_classes, better)
 
         while len(chromosoma_final) < self.parameter.pob_max and chromosoma_classes:
             random_class = random.choice(list(chromosoma_classes.keys()))
             chromosoma_select = np.random.choice(chromosoma_classes[random_class])
             chromosoma_final.append(chromosoma_select)
-            chromosoma_classes[random_class].remove(chromosoma_select)
-            if not chromosoma_classes[random_class]:
-                del chromosoma_classes[random_class]
+            self.delete_data(chromosoma_classes, chromosoma_select)
 
         print(len(chromosoma_final))
         return chromosoma_final
+
+    def delete_data(self, chromosoma_classes, chromosoma):
+        chromosoma_classes[chromosoma.fx].remove(chromosoma)
+        if not chromosoma_classes[chromosoma.fx]:
+            del chromosoma_classes[chromosoma.fx]
 
     def unique_chromosomas(self):
         return list(set(self.populations))
@@ -184,7 +214,7 @@ class ChromosomaUtil:
 
     def chars_populations(self):
         self.char(self.generations[-1])
-        self.char(self.generations[0])
+        self.char(self.generations[1])
 
     def char(self, gen):
         plt.style.use('dark_background')
@@ -199,8 +229,11 @@ class ChromosomaUtil:
         if gen.better:
             ax.scatter(gen.better.x, gen.better.fx, color='red', s=200, label='Mejor Cromosoma')
 
+        if gen.worst:
+            ax.scatter(gen.worst.x, gen.worst.fx, color='blue', s=200, label='Peor Cromosoma')
+
         ax.set_xlabel('x')
         ax.set_ylabel('fx')
-        ax.set_title(f'Dispersión de fx - Generación {(generation_id + 1)}')
+        ax.set_title(f'Dispersión de fx - Generación {generation_id}')
 
         self.generated_figures.append(fig)
