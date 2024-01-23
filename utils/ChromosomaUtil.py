@@ -9,6 +9,7 @@ from io import BytesIO
 from models.Chromosoma import Chromosoma
 from models.Generation import Generation
 from models.Parameter import Parameter
+from utils.AnimateChars import AnimarChars
 
 
 class ChromosomaUtil:
@@ -19,7 +20,9 @@ class ChromosomaUtil:
         'pi': np.pi,
         'log': np.log,
         'e': np.e,
-        'x': None
+        'ln': lambda x: np.log(x + 1e-7),
+        'x': None,
+        'abs': np.abs
     }
 
     def __init__(self, parameter: Parameter, expression):
@@ -49,10 +52,10 @@ class ChromosomaUtil:
             self.populations = purge
             self.generations.append(Generation((i + 1), self.populations, self.parameter.is_min_solution))
 
-
         self.chars_report_general()
         self.chars_populations()
-
+        animate=AnimarChars(self.generations, self.parameter, self.expression)
+        animate.init_animation()
     def add_mutated_population(self, mutated_peers):
         new_id = self.populations[-1].id + 1
         mutated_peers = [mutated_peer.set_id_mutate(new_id + i) for i, mutated_peer in enumerate(mutated_peers)]
@@ -60,6 +63,7 @@ class ChromosomaUtil:
 
     def get_fx(self, population):
         self.math_function['x'] = population.x
+        self.math_function['ln'] = np.log
         try:
             result = float(f"{eval(self.expression, self.math_function):.4f}")
             return result
@@ -159,21 +163,14 @@ class ChromosomaUtil:
         chromosoma_classes = self.define_classes()
 
         better = None
-        worst = None
         if self.parameter.is_min_solution:
             better = self.min_val()
-            worst = self.max_val()
         else:
             better = self.max_val()
-            worst = self.min_val()
 
         if better not in chromosoma_final:
             chromosoma_final.append(better)
             self.delete_data(chromosoma_classes, better)
-
-        if worst not in chromosoma_final:
-            chromosoma_final.append(worst)
-            self.delete_data(chromosoma_classes, worst)
 
         while len(chromosoma_final) < self.parameter.pob_max and chromosoma_classes:
             random_class = random.choice(list(chromosoma_classes.keys()))
@@ -229,7 +226,7 @@ class ChromosomaUtil:
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # or use 'XVID'
         out = cv2.VideoWriter('public/output.mp4', fourcc, 3.0, (640, 480))
         total_generations = len(self.generations)
-        max_extra_images = min(20, total_generations - 2)
+        max_extra_images = min(40, total_generations - 2)
         for i, gen in enumerate(self.generations):
             print(f"Generacion fig: {gen.id}")
             if i == 0 or i == total_generations - 1 or (i % ((total_generations - 2) // max_extra_images) == 0):
@@ -260,6 +257,12 @@ class ChromosomaUtil:
         if gen.worst:
             ax.scatter(gen.worst.x, gen.worst.fx, color='blue', s=200, label='Peor Cromosoma')
 
+        x = np.linspace(self.parameter.min_limit, self.parameter.max_limit, 1000)
+        self.math_function['x'] = x
+        y = eval(self.expression, self.math_function)
+        ax.plot(x, y, '--', label='Expresión')
+
+        fig.suptitle(f"Expresión: {self.expression}", fontsize=16)
         ax.legend()
         ax.set_xlabel('x')
         ax.set_ylabel('fx')

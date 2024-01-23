@@ -32,10 +32,10 @@ class ChromosomaGui(customtkinter.CTk):
         # self.geometry('1000x780')
         self._set_appearance_mode("dark")
 
-        self.expression = "x**3 - x**3 * cos(5*x)"
+        self.expression = "sin(x)*cos(x)*ln(1+abs(x)**(7/5))"
 
         population_size = 8
-        population_size_max = 100
+        population_size_max = 10
         cant_ind_cross = 2
 
         min_limit_x = 0
@@ -45,7 +45,7 @@ class ChromosomaGui(customtkinter.CTk):
         gen_mut_prob = 0.10
 
         resolution_ideal = 0.1
-        generations = 100
+        generations = 2
 
         is_min_solution = False
         self.parameter = Parameter(min_limit_x, max_limit_x, population_size, population_size_max,
